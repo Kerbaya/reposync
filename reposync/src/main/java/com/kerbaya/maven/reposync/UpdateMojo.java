@@ -19,31 +19,40 @@
 package com.kerbaya.maven.reposync;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.handler.manager.ArtifactHandlerManager;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
-import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.shared.artifact.deploy.ArtifactDeployer;
-import org.apache.maven.shared.artifact.deploy.ArtifactDeployerException;
-import org.apache.maven.shared.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.artifact.resolve.ArtifactResult;
-import org.apache.maven.shared.dependencies.resolve.DependencyResolver;
-import org.apache.maven.shared.dependencies.resolve.DependencyResolverException;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.deployment.DeployRequest;
+import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.resolution.DependencyResult;
 
+/**
+ * Prepares a repository to support builds using provided dependencies
+ * 
+ * @author Glenn.Lane@kerbaya.com
+ *
+ */
 @org.apache.maven.plugins.annotations.Mojo(
 		name="update", requiresProject=false, threadSafe=true)
 public class UpdateMojo implements Mojo
@@ -59,6 +68,11 @@ public class UpdateMojo implements Mojo
     @Parameter(property="url", required=true)
     private URL url;
     
+    /**
+     * The dependency artifact coordinates in the format
+     * {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>}.
+     * Multiple dependencies may be specified, separated by commas.
+     */
     @Parameter(property="dependency", required=true)
     private String dependency;
     
@@ -71,93 +85,173 @@ public class UpdateMojo implements Mojo
     @Parameter(property="includeSources", defaultValue="false")
     private boolean includeSources;
     
-    @Parameter(property="includePom", defaultValue="true")
-    private boolean includePom;
-    
-    @Parameter(property="includeParentPoms", defaultValue="true")
-    private boolean includeParentPoms;
-    
     @Component
-    private DependencyResolver dependencyResolver;
+    private RepositorySystem repositorySystem;
 
-    @Component
-    private ArtifactDeployer artifactDeployer;
-    
-    @Component
-    private ArtifactResolver artifactResolver;
-    
-    @Component
-    private ArtifactHandlerManager artifactHandlerManager;
-    
-    @Component
-    private ProjectBuilder projectBuilder;
+    /*
+     * Add an artifact with the same group-artifact-coordinate, but with 
+     * a different classifier and extension
+     */
+    private static void addExtra(
+    		Collection<? super ArtifactRequest> extras,
+    		List<RemoteRepository> remoteRepos,
+    		Artifact artifact, 
+    		String classifier, 
+    		String extension) 
+    {
+    	extras.add(new ArtifactRequest(
+    			new DefaultArtifact(
+    					artifact.getGroupId(), 
+    					artifact.getArtifactId(),
+    					classifier,
+    					extension,
+    					artifact.getVersion()),
+    			remoteRepos,
+    			null));
+    }
     
 	@Override
 	public void execute() throws MojoExecutionException
 	{
-		ProjectBuildingRequest request = session.getProjectBuildingRequest();
-		DeploymentPlan dp = new DeploymentPlan(
-				artifactResolver, 
-				request,
-				projectBuilder, 
-				includeJavadoc, 
-				includeSources, 
-				includePom, 
-				includeParentPoms);
+		ResolutionCollector collector = new ResolutionCollector();
+		
+		RepositorySystemSession repoSession = session.getRepositorySession();
+		
+		List<RemoteRepository> remoteRepos = AetherUtils.createRepoList(
+				session.getRequest().getRemoteRepositories());
+
+		/*
+		 * We'll be using a collecting session during dependency resolution.  We
+		 * need to not only include the final dependencies, but also the POM's 
+		 * for all competing dependency candidates.  The target repository needs
+		 * the POM's for these unused dependencies so that dependency analysis
+		 * can arrive at the same conclusions afterward.
+		 */
+		RepositorySystemSession collectingSession = 
+				collector.createSession(repoSession);
+		
+		Collection<ArtifactRequest> extras = includeJavadoc || includeSources ?
+				new HashSet<ArtifactRequest>() : null;
+						
 		for (String dependencyItem: dependency.split(","))
 		{
-			String[] dependencyTokens = dependencyItem.split(":");
-			if (dependencyTokens.length < 3 || dependencyTokens.length > 5)
-			{
-				throw new MojoExecutionException(
-						"Invalid dependency: " + dependencyItem);
-			}
-			Dependency dep = new Dependency();
-			dep.setGroupId(dependencyTokens[0]);
-			dep.setArtifactId(dependencyTokens[1]);
-			dep.setVersion(dependencyTokens[2]);
-			if (dependencyTokens.length > 3)
-			{
-				dep.setType(dependencyTokens[3]);
-				if (dependencyTokens.length > 4)
-				{
-					dep.setClassifier(dependencyTokens[4]);
-				}
-			}
-			dep.setScope(scope);
-			final Iterable<ArtifactResult> dependencyArtifactResults;
+			/*
+			 * We don't want to submit all dependencies at once: we're not 
+			 * making a repository that supports a build that uses all these 
+			 * dependencies simultaneously; we're making a repository that 
+			 * supports builds that use any of these dependencies independently.
+			 */
+			final DependencyResult dependencyResult;
 			try
 			{
-				dependencyArtifactResults = 
-						dependencyResolver.resolveDependencies(
-								request, 
-								Collections.singleton(dep), 
-								null, 
-								null);
+				dependencyResult = repositorySystem.resolveDependencies(
+						collectingSession, 
+						new DependencyRequest(
+								new CollectRequest(
+										Collections.singletonList(
+												new Dependency(
+														new DefaultArtifact(
+																dependencyItem), 
+														scope)), 
+										null, 
+										remoteRepos),
+								null));
 			}
-			catch (DependencyResolverException e)
+			catch (DependencyResolutionException e)
 			{
-				throw new MojoExecutionException("Error resolving " + dep, e);
+				throw new MojoExecutionException(
+						"Failed to resolve dependencies for " + dependencyItem, 
+						e);
 			}
-			for (ArtifactResult dependencyArtifactResult: 
-					dependencyArtifactResults)
+			if (extras == null)
 			{
-				dp.addArtifact(dependencyArtifactResult.getArtifact());
+				/*
+				 * No more artifacts needed
+				 */
+				continue;
+			}
+			
+			/*
+			 * Javadocs and/or sources were requested.  We're not looking at the
+			 * collector results, because we only want Javadoc/sources for the
+			 * "winning" dependencies.
+			 * 
+			 * The collector will include the POM's for disqualified 
+			 * dependencies: they are included when updating the target 
+			 * repository, to foster the conclusion to disqualify their version 
+			 * during future builds.
+			 */
+			for (ArtifactResult ar: dependencyResult.getArtifactResults())
+			{
+				Artifact artifact = ar.getArtifact();
+				if (!"jar".equals(artifact.getExtension()))
+				{
+					/*
+					 * Only JAR artifacts have associated Javadoc/sources
+					 */
+					continue;
+				}
+				String classifier = artifact.getClassifier();
+				if ("javadoc".equals(classifier) 
+						|| "sources".equals(classifier))
+				{
+					/*
+					 * Javadoc and source JARs don't have Javadocs or sources.
+					 */
+					continue;
+				}
+				
+				if (includeJavadoc)
+				{
+					addExtra(extras, remoteRepos, artifact, "javadoc", "jar");
+				}
+				if (includeSources)
+				{
+					addExtra(extras, remoteRepos, artifact, "sources", "jar");
+				}
 			}
 		}
-		ArtifactRepository repo = new MavenArtifactRepository(
-        		repositoryId, 
-        		url.toString(), 
-        		new DefaultRepositoryLayout(), 
-        		new ArtifactRepositoryPolicy(),
-        		new ArtifactRepositoryPolicy());
-		for (Set<Artifact> artifactSet: dp.getArtifactSets())
+		
+		/*
+		 * All dependencies are collected and resolved.  Now to resolve their 
+		 * Javadoc and sources (if any)
+		 */
+		if (extras != null && !extras.isEmpty())
 		{
 			try
 			{
-				artifactDeployer.deploy(request, repo, artifactSet);
+				/*
+				 * Like the dependencies above, the collector will hear about
+				 * all artifact resolutions: so we don't need to look at these
+				 * results
+				 */
+				repositorySystem.resolveArtifacts(collectingSession, extras);
 			}
-			catch (ArtifactDeployerException e)
+			catch (ArtifactResolutionException e)
+			{
+				/*
+				 * Missing Javadoc/sources is fine
+				 */
+			}
+		}
+		
+		RemoteRepository repository = new RemoteRepository.Builder(
+        		repositoryId, "default", url.toString()).build();
+        
+		/*
+		 * The collector returns the artifacts grouped by group-artifact-version
+		 * coorinate
+		 */
+		for (Set<Artifact> artifactSet: collector.getArtifactSets())
+		{
+			DeployRequest dr = new DeployRequest();
+			dr.setArtifacts(artifactSet);
+			dr.setRepository(repository);
+			try
+			{
+				repositorySystem.deploy(repoSession, dr);
+			}
+			catch (DeploymentException e)
 			{
 				throw new MojoExecutionException("Deployment failed", e);
 			}

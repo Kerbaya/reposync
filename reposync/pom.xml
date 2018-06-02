@@ -10,6 +10,8 @@
 
 <name>RepoSync Maven Plugin</name>
 
+<description>Prepares a repository for collection and resolution of provided dependencies</description>
+
 <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>1.7</maven.compiler.source>
@@ -18,15 +20,14 @@
 
 <dependencies>
 	<dependency>
-		<groupId>org.apache.maven.shared</groupId>
-		<artifactId>maven-artifact-transfer</artifactId>
-		<version>0.9.1</version>
+		<groupId>org.apache.maven</groupId>
+		<artifactId>maven-core</artifactId>
+		<version>3.5.3</version>
 	</dependency>
 	<dependency>
 		<groupId>org.apache.maven.plugin-tools</groupId>
 		<artifactId>maven-plugin-annotations</artifactId>
-		<version>3.0</version>
-		<scope>provided</scope>
+		<version>3.5.2</version>
 	</dependency>
 </dependencies>
 

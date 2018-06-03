@@ -31,6 +31,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -54,7 +55,12 @@ import org.eclipse.aether.resolution.DependencyResult;
  *
  */
 @org.apache.maven.plugins.annotations.Mojo(
-		name="update", requiresProject=false, threadSafe=true)
+		name="update", 
+		requiresProject=false, 
+		threadSafe=true, 
+		aggregator=true, 
+		requiresDependencyResolution=ResolutionScope.TEST,
+		requiresDependencyCollection=ResolutionScope.TEST)
 public class UpdateMojo implements Mojo
 {
 	private Log log;
@@ -116,9 +122,8 @@ public class UpdateMojo implements Mojo
 		ResolutionCollector collector = new ResolutionCollector();
 		
 		RepositorySystemSession repoSession = session.getRepositorySession();
-		
-		List<RemoteRepository> remoteRepos = AetherUtils.createRepoList(
-				session.getRequest().getRemoteRepositories());
+		List<RemoteRepository> remoteRepos = 
+				session.getCurrentProject().getRemoteProjectRepositories();
 
 		/*
 		 * We'll be using a collecting session during dependency resolution.  We

@@ -96,8 +96,13 @@ final class ResolutionCollector extends AbstractRepositoryListener
 			RepositorySystemSession repoSession)
 	{
 		DefaultRepositorySystemSession newSession = 
-				new DefaultRepositorySystemSession(repoSession)
-						.setCache(new DefaultRepositoryCache());
+				new DefaultRepositorySystemSession(repoSession);
+		
+		/*
+		 * Forget any dependencies that were previously resolved
+		 */
+		newSession.setCache(new DefaultRepositoryCache());
+		
 		RepositoryListener listener = newSession.getRepositoryListener();
 		newSession.setRepositoryListener(listener == null ?
 				this

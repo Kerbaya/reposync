@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.aether.AbstractRepositoryListener;
+import org.eclipse.aether.DefaultRepositoryCache;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
@@ -95,7 +96,8 @@ final class ResolutionCollector extends AbstractRepositoryListener
 			RepositorySystemSession repoSession)
 	{
 		DefaultRepositorySystemSession newSession = 
-				new DefaultRepositorySystemSession(repoSession);
+				new DefaultRepositorySystemSession(repoSession)
+						.setCache(new DefaultRepositoryCache());
 		RepositoryListener listener = newSession.getRepositoryListener();
 		newSession.setRepositoryListener(listener == null ?
 				this

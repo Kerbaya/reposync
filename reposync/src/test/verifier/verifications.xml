@@ -7,63 +7,63 @@
 
 
 <file>
-	<location>target\its\test01\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep01\1.0.0\reposync-maven-plugin-it-dep01-1.0.0.jar</location>
+	<location>target/its/test01/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.jar</location>
 </file>
 <file>
-	<location>target\its\test01\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep01\1.0.0\reposync-maven-plugin-it-dep01-1.0.0.pom</location>
-</file>
-
-
-<file>
-	<location>target\its\test02\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep01\1.0.0\reposync-maven-plugin-it-dep01-1.0.0.jar</location>
-</file>
-<file>
-	<location>target\its\test02\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep01\1.0.0\reposync-maven-plugin-it-dep01-1.0.0.pom</location>
-</file>
-<file>
-	<location>target\its\test02\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep02\1.0.0\reposync-maven-plugin-it-dep02-1.0.0.jar</location>
-</file>
-<file>
-	<location>target\its\test02\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep02\1.0.0\reposync-maven-plugin-it-dep02-1.0.0.pom</location>
+	<location>target/its/test01/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.pom</location>
 </file>
 
 
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.0\reposync-maven-plugin-it-dep03-1.0.0.pom</location>
+	<location>target/its/test02/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.0\reposync-maven-plugin-it-dep03-1.0.0.jar</location>
+	<location>target/its/test02/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.pom</location>
+</file>
+<file>
+	<location>target/its/test02/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep02/1.0.0/reposync-maven-plugin-it-dep02-1.0.0.jar</location>
+</file>
+<file>
+	<location>target/its/test02/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep02/1.0.0/reposync-maven-plugin-it-dep02-1.0.0.pom</location>
+</file>
+
+
+<file>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.0/reposync-maven-plugin-it-dep03-1.0.0.pom</location>
+</file>
+<file>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.0/reposync-maven-plugin-it-dep03-1.0.0.jar</location>
 	<exists>false</exists>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.1\reposync-maven-plugin-it-dep03-1.0.1.pom</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.1/reposync-maven-plugin-it-dep03-1.0.1.pom</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.1\reposync-maven-plugin-it-dep03-1.0.1.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.1/reposync-maven-plugin-it-dep03-1.0.1.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.1\reposync-maven-plugin-it-dep03-1.0.1-sources.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.1/reposync-maven-plugin-it-dep03-1.0.1-sources.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep03\1.0.1\reposync-maven-plugin-it-dep03-1.0.1-javadoc.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep03/1.0.1/reposync-maven-plugin-it-dep03-1.0.1-javadoc.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep04\1.0.0\reposync-maven-plugin-it-dep04-1.0.0.pom</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep04/1.0.0/reposync-maven-plugin-it-dep04-1.0.0.pom</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep04\1.0.0\reposync-maven-plugin-it-dep04-1.0.0.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep04/1.0.0/reposync-maven-plugin-it-dep04-1.0.0.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep04\1.0.0\reposync-maven-plugin-it-dep04-1.0.0-sources.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep04/1.0.0/reposync-maven-plugin-it-dep04-1.0.0-sources.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep04\1.0.0\reposync-maven-plugin-it-dep04-1.0.0-javadoc.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep04/1.0.0/reposync-maven-plugin-it-dep04-1.0.0-javadoc.jar</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep05\1.0.0\reposync-maven-plugin-it-dep05-1.0.0.pom</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep05/1.0.0/reposync-maven-plugin-it-dep05-1.0.0.pom</location>
 </file>
 <file>
-	<location>target\its\test04\target\repo\com\kerbaya\maven\reposync-maven-plugin-it-dep05\1.0.0\reposync-maven-plugin-it-dep05-1.0.0.jar</location>
+	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep05/1.0.0/reposync-maven-plugin-it-dep05-1.0.0.jar</location>
 </file>
 
 </files>

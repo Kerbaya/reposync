@@ -29,6 +29,7 @@ provided dependencies
 <scm>
 	<connection>https://github.com/Kerbaya/reposync.git</connection>
 	<url>https://github.com/Kerbaya/reposync</url>
+	<tag>master</tag>
 </scm>
 
 <dependencies>

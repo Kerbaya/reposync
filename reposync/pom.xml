@@ -5,24 +5,37 @@
 
 <groupId>com.kerbaya.maven</groupId>
 <artifactId>reposync-maven-plugin</artifactId>
-<version>1.1.0</version>
+<version>2.0.0-SNAPSHOT</version>
 <packaging>maven-plugin</packaging>
 
 <name>RepoSync Maven Plugin</name>
 
-<description>Prepares a repository for collection and resolution of provided dependencies</description>
+<description>Prepares a remote repository for collection and resolution of 
+provided dependencies
+</description>
 
 <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<maven.compiler.source>1.7</maven.compiler.source>
 	<maven.compiler.target>1.7</maven.compiler.target>
+	<itPluginRepo>file://${project.build.directory}/it-plugin-repo</itPluginRepo>
+	<itDepRepo>file://${project.build.directory}/it-dep-repo</itDepRepo>
 </properties>
+
+<prerequisites>
+	<maven>3.1</maven>
+</prerequisites>
+
+<scm>
+	<connection>https://github.com/Kerbaya/reposync.git</connection>
+	<url>https://github.com/Kerbaya/reposync</url>
+</scm>
 
 <dependencies>
 	<dependency>
 		<groupId>org.apache.maven</groupId>
 		<artifactId>maven-core</artifactId>
-		<version>3.5.3</version>
+		<version>3.1.0</version>
 	</dependency>
 	<dependency>
 		<groupId>org.apache.maven.plugin-tools</groupId>
@@ -30,6 +43,171 @@
 		<version>3.5.2</version>
 		<scope>provided</scope>
 	</dependency>
+	<dependency>
+		<groupId>org.apache.maven</groupId>
+		<artifactId>maven-embedder</artifactId>
+		<version>3.1.0</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.12</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-simple</artifactId>
+		<version>1.7.4</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-deploy-plugin</artifactId>
+		<version>3.0.0-M1</version>
+		<scope>test</scope>
+	</dependency>
 </dependencies>
+
+<build>
+	<plugins>
+		<plugin>
+			<artifactId>maven-deploy-plugin</artifactId>
+			<version>3.0.0-M1</version>
+			<executions>
+				<execution>
+					<id>deploy-it-plugin</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>${project.build.directory}/${project.build.finalName}.jar</file>
+						<pomFile>pom.xml</pomFile>
+						<url>${itPluginRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep01</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep01.xml</pomFile>
+						<sources>src/it-dep/empty.jar</sources>
+						<javadoc>src/it-dep/empty.jar</javadoc>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep02</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep02.xml</pomFile>
+						<sources>src/it-dep/empty.jar</sources>
+						<javadoc>src/it-dep/empty.jar</javadoc>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep03-1.0.0</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep03-1.0.0.xml</pomFile>
+						<sources>src/it-dep/empty.jar</sources>
+						<javadoc>src/it-dep/empty.jar</javadoc>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep03-1.0.1</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep03-1.0.1.xml</pomFile>
+						<sources>src/it-dep/empty.jar</sources>
+						<javadoc>src/it-dep/empty.jar</javadoc>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep04</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep04.xml</pomFile>
+						<sources>src/it-dep/empty.jar</sources>
+						<javadoc>src/it-dep/empty.jar</javadoc>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+				<execution>
+					<id>deploy-it-dep05</id>
+					<phase>pre-integration-test</phase>
+					<goals>
+						<goal>deploy-file</goal>
+					</goals>
+					<configuration>
+						<file>src/it-dep/empty.jar</file>
+						<pomFile>src/it-dep/dep05.xml</pomFile>
+						<url>${itDepRepo}</url>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+		<plugin>
+			<artifactId>maven-invoker-plugin</artifactId>
+			<version>3.1.0</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>run</goal>
+					</goals>
+					<configuration>
+						<failIfNoProjects>true</failIfNoProjects>
+						<goals>
+							<goal>${project.groupId}:${project.artifactId}:${project.version}:update</goal>
+						</goals>
+						<localRepositoryPath>${project.build.directory}/it-local-repo</localRepositoryPath>
+						<properties>
+							<pluginGroupId>${project.groupId}</pluginGroupId>
+							<pluginArtifactId>${project.artifactId}</pluginArtifactId>
+							<pluginVersion>${project.version}</pluginVersion>
+							<itPluginRepo>${itPluginRepo}</itPluginRepo>
+							<itDepRepo>${itDepRepo}</itDepRepo>
+						</properties>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+		<plugin>
+			<artifactId>maven-verifier-plugin</artifactId>
+			<version>1.1</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>verify</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
+	</plugins>
+</build>
 
 </project>

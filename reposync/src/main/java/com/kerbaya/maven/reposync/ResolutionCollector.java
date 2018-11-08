@@ -18,13 +18,14 @@
  */
 package com.kerbaya.maven.reposync;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
+import org.apache.maven.plugin.logging.Log;
 import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.DefaultRepositoryCache;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -32,6 +33,8 @@ import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.repository.ArtifactRepository;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.listener.ChainedRepositoryListener;
 
 /**
@@ -42,44 +45,29 @@ import org.eclipse.aether.util.listener.ChainedRepositoryListener;
  */
 final class ResolutionCollector extends AbstractRepositoryListener
 {
-	private static final class Key
+	private static final class MapValue
 	{
-		private final String groupId;
-		private final String artifactId;
-		private final String version;
-		
-		public Key(Artifact artifact)
+		/**
+		 * {@code null} indicates the artifact was found in the ignored URL
+		 */
+		public Artifact artifact;
+
+		public MapValue(Artifact artifact)
 		{
-			groupId = artifact.getGroupId();
-			artifactId = artifact.getArtifactId();
-			version = artifact.getVersion();
-		}
-		
-		@Override
-		public int hashCode()
-		{
-			return Objects.hash(groupId, artifactId, version);
-		}
-		
-		@Override
-		public boolean equals(Object obj)
-		{
-			if (obj == this)
-			{
-				return true;
-			}
-			if (!(obj instanceof Key))
-			{
-				return false;
-			}
-			Key other = (Key) obj;
-			return Objects.equals(groupId, other.groupId)
-					&& Objects.equals(artifactId, other.artifactId)
-					&& Objects.equals(version, other.version);
+			this.artifact = artifact;
 		}
 	}
-
-	private final Map<Key, Set<Artifact>> artifactMap = new HashMap<>();
+	
+	private final Map<ArtifactItem, MapValue> artifactMap = new HashMap<>();
+	
+	private final Log log;
+	private final String ignoreRepoUrl;
+	
+	public ResolutionCollector(Log log, String ignoreRepoUrl)
+	{
+		this.log = log;
+		this.ignoreRepoUrl = ignoreRepoUrl;
+	}
 
 	/**
 	 * Creates a repository session where all artifact resolutions are 
@@ -110,32 +98,74 @@ final class ResolutionCollector extends AbstractRepositoryListener
 		return newSession;
 	}
 	
+	private boolean ignore(RepositoryEvent event)
+	{
+		if (ignoreRepoUrl == null)
+		{
+			return false;
+		}
+		ArtifactRepository repository = event.getRepository();
+		return repository instanceof RemoteRepository
+				&& Objects.equals(
+						ignoreRepoUrl,
+						((RemoteRepository) repository).getUrl());
+	}
+	
 	@Override
 	public void artifactResolved(RepositoryEvent event)
 	{
 		Artifact artifact = event.getArtifact();
-		if (artifact.getFile() != null)
+		if (artifact.getFile() == null)
 		{
-			Key key = new Key(artifact);
-			Set<Artifact> set = artifactMap.get(new Key(artifact));
-			if (set == null)
-			{
-				set = new HashSet<>();
-				artifactMap.put(key, set);
-			}
-			set.add(artifact);
+			return;
+		}
+		
+		if (log.isDebugEnabled())
+		{
+			log.debug(String.format(
+					"Resolved %s @ %s", artifact, event.getRepository()));
+		}
+		
+		ArtifactItem mapKey = new ArtifactItem(artifact);
+		
+		MapValue mapValue = artifactMap.get(mapKey);
+		if (mapValue == null)
+		{
+			artifactMap.put(
+					mapKey, new MapValue(ignore(event) ? null : artifact));
+		}
+		else if (mapValue.artifact != null && ignore(event))
+		{
+			mapValue.artifact = null;
 		}
 	}
 	
 	/**
-	 * Obtains the collected sets of artifacts, grouped by 
+	 * Obtains the collected sets of artifacts, grouped by
 	 * group-artifact-version coordinate
 	 * 
 	 * @return
 	 * The collected sets of artifacts
 	 */
-	public Collection<Set<Artifact>> getArtifactSets()
+	public Collection<Collection<Artifact>> getArtifactSets()
 	{
-		return artifactMap.values();
+		Map<ArtifactPath, Collection<Artifact>> pathMap = new HashMap<>();
+		for (Entry<ArtifactItem, MapValue> e: artifactMap.entrySet())
+		{
+			MapValue mapValue = e.getValue();
+			if (mapValue.artifact == null)
+			{
+				continue;
+			}
+			ArtifactPath artifactPath = new ArtifactPath(e.getKey());
+			Collection<Artifact> pathArtifacts = pathMap.get(artifactPath);
+			if (pathArtifacts == null)
+			{
+				pathArtifacts = new ArrayList<>();
+				pathMap.put(artifactPath, pathArtifacts);
+			}
+			pathArtifacts.add(mapValue.artifact);
+		}
+		return pathMap.values();
 	}
 }

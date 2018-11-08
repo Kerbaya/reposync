@@ -1,0 +1,69 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion>
+
+<groupId>com.kerbaya.maven</groupId>
+<artifactId>reposync-maven-plugin-it-test</artifactId>
+<version>1.0.0</version>
+<packaging>pom</packaging>
+
+<description>Should fail due to a depepdency (dep05) that's missing extras, 
+while also having a broken remote repository.  If one or more repositories are 
+malfunctioning, we can't definitively say the extras don't exist; so we fail.
+</description>
+
+<pluginRepositories>
+	<pluginRepository>
+		<id>it-plugin-repo</id>
+		<url>${itPluginRepo}</url>
+	</pluginRepository>
+</pluginRepositories>
+
+<repositories>
+	<repository>
+		<id>it-dep-repo</id>
+		<url>${itDepRepo}</url>
+	</repository>
+	<!--
+	The broken repository 
+	-->
+	<repository>
+		<id>invalid-repo</id>
+		<url>urn:invalid</url>
+	</repository>
+</repositories>
+
+<build>
+	<pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>${pluginGroupId}</groupId>
+				<artifactId>${pluginArtifactId}</artifactId>
+				<version>${pluginVersion}</version>
+				<configuration>
+					<artifactItems>
+						<artifactItem>
+							<groupId>com.kerbaya.maven</groupId>
+							<artifactId>reposync-maven-plugin-it-dep05</artifactId>
+							<version>1.0.0</version>
+						</artifactItem>
+					</artifactItems>
+					<extraItems>
+						<extraItem>
+							<extension>jar</extension>
+							<classifier>sources</classifier>
+						</extraItem>
+						<extraItem>
+							<extension>jar</extension>
+							<classifier>javadoc</classifier>
+						</extraItem>
+					</extraItems>
+					<repositoryUrl>file://${project.build.directory}/repo</repositoryUrl>
+				</configuration>
+			</plugin>
+		</plugins>
+	</pluginManagement>
+</build>
+
+</project>

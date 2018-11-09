@@ -9,10 +9,33 @@
 <packaging>maven-plugin</packaging>
 
 <name>RepoSync Maven Plugin</name>
+<description>Prepares a remote repository for collection and resolution of provided dependencies</description>
+<url>https://www.kerbaya.com/reposync</url>
+<inceptionYear>2018</inceptionYear>
+<organization>
+	<name>Kerbaya Software</name>
+	<url>https://www.kerbaya.com</url>
+</organization>
+<licenses>
+	<license>
+		<name>GNU General Public License v3.0 or later</name>
+		<url>https://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
+	</license>
+</licenses>
 
-<description>Prepares a remote repository for collection and resolution of 
-provided dependencies
-</description>
+<prerequisites>
+	<maven>3.1</maven>
+</prerequisites>
+
+<scm>
+	<connection>scm:git:https://github.com/Kerbaya/reposync.git</connection>
+	<url>https://github.com/Kerbaya/reposync/tree/${project.scm.tag}</url>
+	<tag>master</tag>
+</scm>
+
+<issueManagement>
+	<url>https://github.com/Kerbaya/reposync/issues</url>
+</issueManagement>
 
 <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,16 +44,6 @@ provided dependencies
 	<itPluginRepo>file://${project.build.directory}/it-plugin-repo</itPluginRepo>
 	<itDepRepo>file://${project.build.directory}/it-dep-repo</itDepRepo>
 </properties>
-
-<prerequisites>
-	<maven>3.1</maven>
-</prerequisites>
-
-<scm>
-	<connection>https://github.com/Kerbaya/reposync.git</connection>
-	<url>https://github.com/Kerbaya/reposync</url>
-	<tag>master</tag>
-</scm>
 
 <dependencies>
 	<dependency>
@@ -208,7 +221,39 @@ provided dependencies
 				</execution>
 			</executions>
 		</plugin>
+		<plugin>
+			<artifactId>maven-site-plugin</artifactId>
+			<version>3.7.1</version>
+			<configuration>
+				<topSiteURL>https://www.kerbaya.com/reposync</topSiteURL>
+				<skipDeploy>true</skipDeploy>
+			</configuration>
+		</plugin>
+		<plugin>
+			<artifactId>maven-plugin-plugin</artifactId>
+			<version>3.6.0</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>descriptor</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
 	</plugins>
 </build>
+
+<reporting>
+	<plugins>
+		<plugin>
+			<artifactId>maven-project-info-reports-plugin</artifactId>
+			<version>3.0.0</version>
+		</plugin>
+		<plugin>
+			<artifactId>maven-plugin-plugin</artifactId>
+			<version>3.6.0</version>
+		</plugin>
+	</plugins>
+</reporting>
 
 </project>

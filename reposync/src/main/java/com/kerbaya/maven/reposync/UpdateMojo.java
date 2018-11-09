@@ -19,6 +19,7 @@
 package com.kerbaya.maven.reposync;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -90,7 +91,7 @@ public class UpdateMojo implements Mojo
      * configuration 
      */
     @Parameter
-    private Set<ArtifactItem> artifactItems;
+    private ArtifactItem[] artifactItems;
     
     /**
      * The artifact to update when executing the plugin from the command-line, 
@@ -108,7 +109,7 @@ public class UpdateMojo implements Mojo
      * configuration
      */
     @Parameter
-    private Set<ExtraItem> extraItems;
+    private ExtraItem[] extraItems;
     
     /**
      * Extra artifacts to include when executing the plugin from the command-
@@ -127,6 +128,10 @@ public class UpdateMojo implements Mojo
     @Parameter(defaultValue="false")
     private boolean force;
     
+    /**
+     * If <code>true</code>, the plugin execution will fail when no artifacts
+     * have been specified.
+     */
     @Parameter(defaultValue="true")
     private boolean failOnNoArtifact;
     
@@ -161,7 +166,7 @@ public class UpdateMojo implements Mojo
 		Set<ArtifactItem> finalArtifactItems = new HashSet<>();
 		if (artifactItems != null)
 		{
-			finalArtifactItems.addAll(this.artifactItems);
+			finalArtifactItems.addAll(Arrays.asList(artifactItems));
 		}
 		if (artifact != null)
 		{
@@ -183,7 +188,7 @@ public class UpdateMojo implements Mojo
 		Set<ExtraItem> finalExtraItems = new HashSet<>();
 		if (extraItems != null)
 		{
-			finalExtraItems.addAll(extraItems);
+			finalExtraItems.addAll(Arrays.asList(extraItems));
 		}
 		if (extra != null)
 		{

@@ -66,6 +66,23 @@
 	<location>target/its/test04/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep05/1.0.0/reposync-maven-plugin-it-dep05-1.0.0.jar</location>
 </file>
 
+
+<file>
+	<location>target/its/ignorePreexisting/target/repo/com/kerbaya/maven</location>
+</file>
+<file>
+	<location>target/its/ignorePreexisting/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01</location>
+	<exists>false</exists>
+</file>
+
+
+<file>
+	<location>target/its/force/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.pom</location>
+</file>
+<file>
+	<location>target/its/force/target/repo/com/kerbaya/maven/reposync-maven-plugin-it-dep01/1.0.0/reposync-maven-plugin-it-dep01-1.0.0.jar</location>
+</file>
+
 </files>
 
 </verifications>

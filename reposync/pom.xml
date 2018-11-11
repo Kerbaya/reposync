@@ -195,10 +195,6 @@
 					</goals>
 					<configuration>
 						<failIfNoProjects>true</failIfNoProjects>
-						<goals>
-							<goal>${project.groupId}:${project.artifactId}:${project.version}:update</goal>
-						</goals>
-						<localRepositoryPath>${project.build.directory}/it-local-repo</localRepositoryPath>
 						<properties>
 							<pluginGroupId>${project.groupId}</pluginGroupId>
 							<pluginArtifactId>${project.artifactId}</pluginArtifactId>

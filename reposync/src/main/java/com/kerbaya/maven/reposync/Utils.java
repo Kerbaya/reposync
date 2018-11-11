@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 
 final class Utils
 {
-	private static final Pattern TOKEN_SEPARATOR = Pattern.compile("\\s+");
+	private static final Pattern TOKEN_SEPARATOR = Pattern.compile("\\s+|,");
 
 	private Utils() {}
 	

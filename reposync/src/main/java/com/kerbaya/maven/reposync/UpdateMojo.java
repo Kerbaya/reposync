@@ -73,7 +73,7 @@ public class UpdateMojo implements Mojo
      * settings associated to the provided repository ID.  At least one of 
      * {@link #repositoryId} or {@link #repositoryUrl} must be provided.
      */
-    @Parameter
+    @Parameter(property="repositoryId")
     private String repositoryId;
     
     /**
@@ -83,7 +83,7 @@ public class UpdateMojo implements Mojo
      * proxy/login settings associated to the provided repository ID.  At least 
      * one of {@link #repositoryId} or {@link #repositoryUrl} must be provided.
      */
-    @Parameter
+    @Parameter(property="repositoryUrl")
     private String repositoryUrl;
     
     /**
@@ -97,11 +97,11 @@ public class UpdateMojo implements Mojo
      * The artifact to update when executing the plugin from the command-line, 
      * in the format
      * <code>&lt;groupId&gt;:&lt;artifactId&gt;[:&lt;extension&gt;[:&lt;classifier&gt;]]:&lt;version&gt;</code>.
-     * Multiple artifacts may be specified, separated by one or more whitespace
-     * characters.  Use {@link #artifactItems} when executing the plugin within 
-     * a POM configuration.
+     * Multiple artifacts may be specified, separated by a comma, or one or more 
+     * whitespace characters.  Use {@link #artifactItems} when executing the 
+     * plugin within a POM configuration.
      */
-    @Parameter
+    @Parameter(property="artifact")
     private String artifact;
     
     /**
@@ -115,24 +115,24 @@ public class UpdateMojo implements Mojo
      * Extra artifacts to include when executing the plugin from the command-
      * line, in the format
      * <code>&lt;extension&gt;[:&lt;classifier&gt;]</code>.  Multiple extras may
-     * be specified, separated by one or more whitespace characters.  For 
+     * be specified, separated by a comma, or one or more whitespace characters.  For 
      * example, "jar:sources jar:javadoc"
      */
-    @Parameter
+    @Parameter(property="extra")
     private String extra;
     
     /**
      * If <code>true</code>, artifacts are updated even when they are determined 
      * to have originated from the target repository.
      */
-    @Parameter(defaultValue="false")
+    @Parameter(defaultValue="false", property="force")
     private boolean force;
     
     /**
      * If <code>true</code>, the plugin execution will fail when no artifacts
      * have been specified.
      */
-    @Parameter(defaultValue="true")
+    @Parameter(defaultValue="true", property="failOnNoArtifact")
     private boolean failOnNoArtifact;
     
     @Component
@@ -315,7 +315,7 @@ public class UpdateMojo implements Mojo
 					continue;
 				}
 				
-				for (ExtraItem extra: extraItems)
+				for (ExtraItem extra: finalExtraItems)
 				{
 					ArtifactItem extraToResolve = new ArtifactItem(
 							artifactPath, extra);

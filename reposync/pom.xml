@@ -23,6 +23,15 @@
 	</license>
 </licenses>
 
+<developers>
+	<developer>
+		<name>Glenn Lane</name>
+		<email>Glenn.Lane@kerbaya.com</email>
+		<organization>Kerbaya Software</organization>
+		<organizationUrl>https://www.kerbaya.com</organizationUrl>
+	</developer>
+</developers>
+
 <prerequisites>
 	<maven>3.1</maven>
 </prerequisites>
@@ -83,6 +92,11 @@
 		<version>3.0.0-M1</version>
 		<scope>test</scope>
 	</dependency>
+<dependency>
+    <groupId>org.bouncycastle</groupId>
+    <artifactId>bcpg-jdk15on</artifactId>
+    <version>1.60</version>
+</dependency>
 </dependencies>
 
 <build>

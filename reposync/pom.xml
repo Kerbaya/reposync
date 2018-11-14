@@ -5,12 +5,12 @@
 
 <groupId>com.kerbaya.maven</groupId>
 <artifactId>reposync-maven-plugin</artifactId>
-<version>1.2.0</version>
+<version>1.2.1</version>
 <packaging>maven-plugin</packaging>
 
 <name>RepoSync Maven Plugin</name>
 <description>Prepares a remote repository for collection and resolution of provided dependencies</description>
-<url>https://www.kerbaya.com/reposync</url>
+<url>https://www.kerbaya.com/reposync/</url>
 <inceptionYear>2018</inceptionYear>
 <organization>
 	<name>Kerbaya Software</name>
@@ -92,11 +92,6 @@
 		<version>3.0.0-M1</version>
 		<scope>test</scope>
 	</dependency>
-<dependency>
-    <groupId>org.bouncycastle</groupId>
-    <artifactId>bcpg-jdk15on</artifactId>
-    <version>1.60</version>
-</dependency>
 </dependencies>
 
 <build>
@@ -237,7 +232,7 @@
 			<artifactId>maven-site-plugin</artifactId>
 			<version>3.7.1</version>
 			<configuration>
-				<topSiteURL>https://www.kerbaya.com/reposync</topSiteURL>
+				<topSiteURL>https://www.kerbaya.com/reposync/</topSiteURL>
 				<skipDeploy>true</skipDeploy>
 			</configuration>
 		</plugin>

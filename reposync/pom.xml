@@ -5,7 +5,7 @@
 
 <groupId>com.kerbaya.maven</groupId>
 <artifactId>reposync-maven-plugin</artifactId>
-<version>1.2.1</version>
+<version>1.2.2-SNAPSHOT</version>
 <packaging>maven-plugin</packaging>
 
 <name>RepoSync Maven Plugin</name>
@@ -50,8 +50,6 @@
 
 <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<maven.compiler.source>1.7</maven.compiler.source>
-	<maven.compiler.target>1.7</maven.compiler.target>
 	<itPluginRepo>file://${project.build.directory}/it-plugin-repo</itPluginRepo>
 	<itDepRepo>file://${project.build.directory}/it-dep-repo</itDepRepo>
 </properties>
@@ -61,6 +59,12 @@
 		<groupId>org.apache.maven</groupId>
 		<artifactId>maven-core</artifactId>
 		<version>3.1.0</version>
+		<exclusions>
+			<exclusion>
+				<groupId>org.eclipse.sisu</groupId>
+				<artifactId>org.eclipse.sisu.inject</artifactId>
+			</exclusion>
+		</exclusions>
 	</dependency>
 	<dependency>
 		<groupId>org.apache.maven.plugin-tools</groupId>
@@ -95,6 +99,23 @@
 </dependencies>
 
 <build>
+	<pluginManagement>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+					<showWarnings>true</showWarnings>
+					<compilerArgs>
+						<compilerArg>-Xlint:all</compilerArg>
+						<compilerArg>-Werror</compilerArg>
+						<compilerArg>-Xbootclasspath:${jre7.home}/lib/rt.jar</compilerArg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</pluginManagement>
 	<plugins>
 		<plugin>
 			<artifactId>maven-deploy-plugin</artifactId>

@@ -31,7 +31,7 @@ public final class ArtifactItem
 	private static final String DEFAULT_EXTENSION = "jar";
 	
 	private static final Pattern PATTERN = Pattern.compile(
-			"([^:\\s]+):([^:\\s]+):([^:\\s]+)(?::([^:\\s]*)(?::([^:\\s]*))?)?");
+			"([^:\\s]+):([^:\\s]+)(?::([^:\\\\s]*)(?::([^:\\\\s]*))?)?:([^:\\s]+)");
 	
 	/**
 	 * the group identifier of an artifact, for example "org.apache.maven"
@@ -50,14 +50,6 @@ public final class ArtifactItem
 	private String artifactId;
 	
 	/**
-	 * the version of an artifact, for example "1.0-20100529-1213"
-	 * 
-	 * @parameter
-	 * @required
-	 */
-	private String version;
-	
-	/**
 	 * the (file) extension of an artifact, for example "jar"
 	 * 
 	 * @parameter
@@ -71,6 +63,13 @@ public final class ArtifactItem
 	 */
 	private String classifier;
 	
+	/**
+	 * the version of an artifact, for example "1.0-20100529.1213-1"
+	 * 
+	 * @parameter
+	 * @required
+	 */
+	private String version;
 	
 	public ArtifactItem()
 	{
@@ -99,23 +98,23 @@ public final class ArtifactItem
 		this(
 				m.group(1),
 				m.group(2),
-				m.group(3),
-				Utils.nullToDefault(m.group(4), DEFAULT_EXTENSION),
-				Utils.nullToEmpty(m.group(5)));
+				Utils.nullToDefault(m.group(3), DEFAULT_EXTENSION),
+				Utils.nullToEmpty(m.group(4)),
+				m.group(5));
 	}
 	
 	public ArtifactItem(
 			String groupId, 
 			String artifactId, 
-			String version,
 			String extension, 
-			String classifier)
+			String classifier,
+			String version)
 	{
 		this.groupId = Objects.requireNonNull(groupId);
 		this.artifactId = Objects.requireNonNull(artifactId);
-		this.version = Objects.requireNonNull(version);
 		this.extension = Objects.requireNonNull(extension);
 		this.classifier = Objects.requireNonNull(classifier);
+		this.version = Objects.requireNonNull(version);
 	}
 
 	public ArtifactItem(Artifact artifact)
@@ -123,9 +122,9 @@ public final class ArtifactItem
 		this(
 				artifact.getGroupId(),
 				artifact.getArtifactId(),
-				artifact.getVersion(),
 				artifact.getExtension(),
-				artifact.getClassifier());
+				artifact.getClassifier(),
+				artifact.getVersion());
 	}
 	
 	public ArtifactItem(ArtifactPath artifactPath, ExtraItem extra)
@@ -133,9 +132,9 @@ public final class ArtifactItem
 		this(
 				artifactPath.getGroupId(),
 				artifactPath.getArtifactId(),
-				artifactPath.getVersion(),
 				extra.getExtension(),
-				extra.getClassifier());
+				extra.getClassifier(),
+				artifactPath.getVersion());
 	}
 
 	private static String requireNonEmpty(String str)
@@ -224,9 +223,8 @@ public final class ArtifactItem
 		StringBuilder sb = new StringBuilder()
 				.append(groupId)
 				.append(':')
-				.append(artifactId)
-				.append(':')
-				.append(version);
+				.append(artifactId);
+		
 		if (!extension.isEmpty() || !classifier.isEmpty())
 		{
 			sb.append(':');
@@ -237,6 +235,10 @@ public final class ArtifactItem
 				sb.append(classifier);
 			}
 		}
+		
+		sb.append(':')
+			.append(version);
+
 		return sb.toString();
 	}
 	

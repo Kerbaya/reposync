@@ -31,17 +31,17 @@ public class ArtifactItemTest
 	private static void assertProperties(
 			String str, 
 			String groupId, 
-			String artifactId, 
-			String version, 
+			String artifactId,
 			String extension, 
-			String classifier)
+			String classifier,
+			String version)
 	{
 		ArtifactItem ai = new ArtifactItem(str);
 		Assert.assertEquals("groupId", groupId, ai.getGroupId());
 		Assert.assertEquals("artifactId", artifactId, ai.getArtifactId());
-		Assert.assertEquals("version", version, ai.getVersion());
 		Assert.assertEquals("extension", extension, ai.getExtension());
 		Assert.assertEquals("classifier", classifier, ai.getClassifier());
+		Assert.assertEquals("version", version, ai.getVersion());
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -114,14 +114,14 @@ public class ArtifactItemTest
 	@Test
 	public void threeToken()
 	{
-		assertProperties("one:two:three", "one", "two", "three", "jar", "");
+		assertProperties("one:two:three", "one", "two", "jar", "", "three");
 	}
 	
 	@Test
 	public void fourToken()
 	{
 		assertProperties(
-				"one:two:three:four", "one", "two", "three", "four", "");
+				"one:two:three:four", "one", "two", "three", "", "four");
 	}
 	
 	@Test

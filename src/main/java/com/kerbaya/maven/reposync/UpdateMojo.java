@@ -27,11 +27,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -49,6 +50,9 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * Prepares a repository to support builds using provided dependencies
  * 
@@ -61,6 +65,8 @@ import org.eclipse.aether.transfer.ArtifactNotFoundException;
 		threadSafe=true)
 public class UpdateMojo implements Mojo
 {
+	@Getter
+	@Setter
 	private Log log;
 
     @Parameter(defaultValue="${session}", readonly=true, required=true)
@@ -141,7 +147,7 @@ public class UpdateMojo implements Mojo
     @Parameter(property="snapshotAsRelease", defaultValue="false")
     private boolean snapshotAsRelease;
     
-    @Component
+    @Inject
     private RepositorySystem repositorySystem;
     
 	private static final String findRepositoryUrlById(
@@ -420,17 +426,5 @@ public class UpdateMojo implements Mojo
 		}
 		
 		return artifactSet;
-	}
-
-	@Override
-	public void setLog(Log log)
-	{
-		this.log = log;
-	}
-
-	@Override
-	public Log getLog()
-	{
-		return log;
 	}
 }

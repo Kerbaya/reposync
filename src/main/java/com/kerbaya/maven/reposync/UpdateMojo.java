@@ -135,6 +135,12 @@ public class UpdateMojo implements Mojo
     @Parameter(defaultValue="true", property="failOnNoArtifact")
     private boolean failOnNoArtifact;
     
+    /**
+     * If <code>true</code>, snapshot artifacts using timestamps are deployed to the target repository as releases 
+     */
+    @Parameter(property="snapshotAsRelease", defaultValue="false")
+    private boolean snapshotAsRelease;
+    
     @Component
     private RepositorySystem repositorySystem;
     
@@ -388,7 +394,7 @@ public class UpdateMojo implements Mojo
 		for (Collection<Artifact> artifactSet: collector.getArtifactSets())
 		{
 			DeployRequest dr = new DeployRequest();
-			dr.setArtifacts(artifactSet);
+			dr.setArtifacts(rewriteArtifacts(artifactSet));
 			dr.setRepository(repository);
 			try
 			{
@@ -399,6 +405,21 @@ public class UpdateMojo implements Mojo
 				throw new MojoExecutionException("Deployment failed", e);
 			}
 		}
+	}
+	
+	private Collection<Artifact> rewriteArtifacts(Collection<Artifact> artifactSet)
+	{
+		if (snapshotAsRelease)
+		{
+			Collection<Artifact> result = new ArrayList<>(artifactSet.size());
+			for (Artifact a: artifactSet)
+			{
+				result.add(ReleaseArtifact.timestampSnapshotAsRelease(a));
+			}
+			return result;
+		}
+		
+		return artifactSet;
 	}
 
 	@Override

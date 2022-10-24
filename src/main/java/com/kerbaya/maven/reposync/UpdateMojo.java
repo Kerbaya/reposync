@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -72,24 +71,25 @@ public class UpdateMojo implements Mojo
     @Parameter(defaultValue="${session}", readonly=true, required=true)
     private MavenSession session;
     
+	@Parameter(defaultValue="${repositorySystemSession}", required=true, readonly=true)
+	private RepositorySystemSession rss;
+	
     /**
      * The ID of the repository that should be updated with dependencies.  If
      * used in combination with the {@link #repositoryUrl} parameter, the updated 
      * repository is the provided URL used in combination with proxy/login 
-     * settings associated to the provided repository ID.  At least one of 
-     * {@link #repositoryId} or {@link #repositoryUrl} must be provided.
+     * settings associated to the provided repository ID.
      */
-    @Parameter(property="repositoryId")
+    @Parameter(property="repositoryId", defaultValue="remote-repository", required=true)
     private String repositoryId;
     
     /**
-     * The URL of the repository that should be updated with dependencies.  If
-     * used in combination with the {@link #repositoryId} parameter, the 
+     * The URL of the repository that should be updated with dependencies.  Used 
+     * in combination with the {@link #repositoryId} parameter, the 
      * updated repository is the provided URL used in combination with 
-     * proxy/login settings associated to the provided repository ID.  At least 
-     * one of {@link #repositoryId} or {@link #repositoryUrl} must be provided.
+     * proxy/login settings associated to the provided repository ID.
      */
-    @Parameter(property="repositoryUrl")
+    @Parameter(property="repositoryUrl", required=true)
     private String repositoryUrl;
     
     /**
@@ -150,21 +150,32 @@ public class UpdateMojo implements Mojo
     @Inject
     private RepositorySystem repositorySystem;
     
-	private static final String findRepositoryUrlById(
-			Collection<RemoteRepository> repos, String repositoryId) 
-					throws MojoExecutionException 
-	{
-		for (RemoteRepository repo: repos)
-		{
-			if (Objects.equals(repositoryId, repo.getId()))
-			{
-				return repo.getUrl();
-			}
-		}
-		throw new MojoExecutionException(String.format(
-				"Could not find repositoryId=%s", repositoryId));
-	}
-
+    private RemoteRepository buildDistRepo()
+    {
+        RemoteRepository remoteRepo = new RemoteRepository.Builder(repositoryId, "default", repositoryUrl).build();
+        
+        boolean hasAuthentication = remoteRepo.getAuthentication() != null;
+        boolean hasProxy = remoteRepo.getProxy() != null;
+        
+        if (hasAuthentication && hasProxy)
+        {
+        	return remoteRepo;
+        }
+        
+        RemoteRepository.Builder builder = new RemoteRepository.Builder(remoteRepo);
+        if (!hasAuthentication)
+        {
+        	builder.setAuthentication(rss.getAuthenticationSelector().getAuthentication(remoteRepo));
+        }
+        
+        if (!hasProxy)
+        {
+        	builder.setProxy(rss.getProxySelector().getProxy(remoteRepo));
+        }
+        
+        return builder.build();
+    }
+    
 	@Override
 	public void execute() throws MojoExecutionException
 	{
@@ -210,26 +221,9 @@ public class UpdateMojo implements Mojo
 			}
 		}
 		
-		List<RemoteRepository> remoteRepos = 
-				session.getCurrentProject().getRemoteProjectRepositories();
+		List<RemoteRepository> remoteRepos = session.getCurrentProject().getRemoteProjectRepositories();
 		
-		final String ignoreRepoUrl;
-		if (force)
-		{
-			ignoreRepoUrl = null;
-		}
-		else
-		{
-			ignoreRepoUrl = repositoryUrl == null ?
-					findRepositoryUrlById(remoteRepos, repositoryId) 
-					: repositoryUrl;	
-		}
-
-		ResolutionCollector collector = new ResolutionCollector(
-				log, ignoreRepoUrl);
-		
-		RepositorySystemSession repoSession = session.getRepositorySession();
-		
+		ResolutionCollector collector = new ResolutionCollector(log, force ? null : repositoryUrl);
 		
 		/*
 		 * We'll be using a collecting session during dependency resolution.  We
@@ -238,8 +232,7 @@ public class UpdateMojo implements Mojo
 		 * the POM's for these unused dependencies so that dependency analysis
 		 * can arrive at the same conclusions afterward.
 		 */
-		RepositorySystemSession collectingSession = 
-				collector.createSession(repoSession);
+		RepositorySystemSession collectingSession = collector.createSession(rss);
 		
 		final Set<ArtifactItem> artifactSetForExtras = 
 				finalExtraItems.isEmpty() ? null : new HashSet<ArtifactItem>();
@@ -387,9 +380,7 @@ public class UpdateMojo implements Mojo
 		 * All artifacts have been collected.  Now we push them to the remote
 		 * repository.
 		 */
-		RemoteRepository repository = new RemoteRepository.Builder(
-        		repositoryId, "default", repositoryUrl)
-				.build();
+		RemoteRepository distRepo = buildDistRepo();
         
 		/*
 		 * The collector returns the artifacts grouped by group-artifact-version
@@ -401,10 +392,10 @@ public class UpdateMojo implements Mojo
 		{
 			DeployRequest dr = new DeployRequest();
 			dr.setArtifacts(rewriteArtifacts(artifactSet));
-			dr.setRepository(repository);
+			dr.setRepository(distRepo);
 			try
 			{
-				repositorySystem.deploy(repoSession, dr);
+				repositorySystem.deploy(rss, dr);
 			}
 			catch (DeploymentException e)
 			{

@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
@@ -54,9 +56,6 @@ import lombok.Setter;
 
 /**
  * Prepares a repository to support builds using provided dependencies
- * 
- * @author Glenn.Lane@kerbaya.com
- *
  */
 @org.apache.maven.plugins.annotations.Mojo(
 		name="update", 
@@ -146,6 +145,23 @@ public class UpdateMojo implements Mojo
      */
     @Parameter(property="snapshotAsRelease", defaultValue="false")
     private boolean snapshotAsRelease;
+    
+    /**
+     * a regular expression against which an artifact must be matched before being deployed to the target repository.
+     * artifacts are matched using {@code <groupId>:<artifactId>:<extension>[:<classifier>]:<version>}
+     */
+    @Parameter(property="filter")
+    private String filter;
+    
+    /**
+     * a filter against which an artifact must be matched before deploying to the repository.  Values are
+     * <ul>
+     * <li>{@code SNAPSHOT}: only include artifacts with snapshot versions</li>
+     * <li>{@code RELEASE}: only include artifacts with release versions</li>
+     * </ul>
+     */
+    @Parameter(property="filterType")
+    private Filter filterType;
     
     @Inject
     private RepositorySystem repositorySystem;
@@ -390,8 +406,24 @@ public class UpdateMojo implements Mojo
 		 */
 		for (Collection<Artifact> artifactSet: collector.getArtifactSets())
 		{
+			Stream<Artifact> toDeploy = artifactSet.stream();
+			if (filter != null)
+			{
+				toDeploy = toDeploy.filter(new RegExFilter(filter));
+			}
+			
+			if (filterType != null)
+			{
+				toDeploy = toDeploy.filter(filterType);
+			}
+			
+			if (snapshotAsRelease)
+			{
+				toDeploy = toDeploy.map(ReleaseArtifact::timestampSnapshotAsRelease);
+			}
+			
 			DeployRequest dr = new DeployRequest();
-			dr.setArtifacts(rewriteArtifacts(artifactSet));
+			dr.setArtifacts(toDeploy.collect(Collectors.toList()));
 			dr.setRepository(distRepo);
 			try
 			{
@@ -402,20 +434,5 @@ public class UpdateMojo implements Mojo
 				throw new MojoExecutionException("Deployment failed", e);
 			}
 		}
-	}
-	
-	private Collection<Artifact> rewriteArtifacts(Collection<Artifact> artifactSet)
-	{
-		if (snapshotAsRelease)
-		{
-			Collection<Artifact> result = new ArrayList<>(artifactSet.size());
-			for (Artifact a: artifactSet)
-			{
-				result.add(ReleaseArtifact.timestampSnapshotAsRelease(a));
-			}
-			return result;
-		}
-		
-		return artifactSet;
 	}
 }

@@ -40,8 +40,6 @@ import org.eclipse.aether.util.listener.ChainedRepositoryListener;
 /**
  * Builds lists of artifacts, grouped by group-artifact-version coordinate
  * 
- * @author Glenn.Lane@kerbaya.com
- *
  */
 final class ResolutionCollector extends AbstractRepositoryListener
 {

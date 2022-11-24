@@ -23,6 +23,9 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public final class ExtraItem
 {
 	private static final Pattern PATTERN = Pattern.compile(
@@ -91,28 +94,6 @@ public final class ExtraItem
 	public void setClassifier(String classifier)
 	{
 		this.classifier = Objects.requireNonNull(classifier);
-	}
-	
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(extension, classifier);
-	}
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (obj == this)
-		{
-			return true;
-		}
-		if (obj == null || !(ExtraItem.class.equals(obj.getClass())))
-		{
-			return false;
-		}
-		ExtraItem other = (ExtraItem) obj;
-		return Objects.equals(extension, other.extension)
-				&& Objects.equals(classifier, other.classifier);
 	}
 	
 	@Override

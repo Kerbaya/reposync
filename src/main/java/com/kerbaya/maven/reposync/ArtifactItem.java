@@ -18,20 +18,20 @@
  */
 package com.kerbaya.maven.reposync;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public final class ArtifactItem
 {
 	private static final String DEFAULT_EXTENSION = "jar";
-	
-	private static final Pattern PATTERN = Pattern.compile(
-			"([^:\\s]+):([^:\\s]+)(?::([^:\\\\s]*)(?::([^:\\\\s]*))?)?:([^:\\s]+)");
+	private static final int MAX_TOKEN_COUNT = 5;
 	
 	/**
 	 * the group identifier of an artifact, for example "org.apache.maven"
@@ -50,7 +50,7 @@ public final class ArtifactItem
 	private String artifactId;
 	
 	/**
-	 * the (file) extension of an artifact, for example "jar"
+	 * the (file) extension of an artifact, for example "jar".  If omitted, "jar" is used.
 	 * 
 	 * @parameter
 	 */
@@ -64,10 +64,9 @@ public final class ArtifactItem
 	private String classifier;
 	
 	/**
-	 * the version of an artifact, for example "1.0-20100529.1213-1"
+	 * the version of an artifact, for example "1.0-20100529.1213-1".  If omitted, dependency management will be used.
 	 * 
 	 * @parameter
-	 * @required
 	 */
 	private String version;
 	
@@ -75,32 +74,68 @@ public final class ArtifactItem
 	{
 		extension = DEFAULT_EXTENSION;
 		classifier = "";
+		version = "";
 	}
 	
-	private static MatchResult matchPattern(CharSequence str)
+	private static IllegalArgumentException invalidArtifact(String str)
 	{
-		Matcher m = PATTERN.matcher(str);
-		if (!m.matches())
+		return new IllegalArgumentException(String.format("invalid artifact \"%s\"", str));
+	}
+	
+	public ArtifactItem(String str)
+	{
+		List<String> tokens = new ArrayList<String>(MAX_TOKEN_COUNT);
+		int lastIdx = 0;
+		int idx;
+		while ((idx = str.indexOf(':', lastIdx)) != -1)
 		{
-			throw new IllegalArgumentException(String.format(
-					"invalid artifact \"%s\"",  str));
+			tokens.add(str.substring(lastIdx, idx));
+			if (tokens.size() == MAX_TOKEN_COUNT)
+			{
+				throw invalidArtifact(str);
+			}
+			lastIdx = idx + 1;
 		}
-		return m;
-	}
-	
-	public ArtifactItem(CharSequence str)
-	{
-		this(matchPattern(str));
-	}
-	
-	private ArtifactItem(MatchResult m)
-	{
-		this(
-				m.group(1),
-				m.group(2),
-				Utils.nullToDefault(m.group(3), DEFAULT_EXTENSION),
-				Utils.nullToEmpty(m.group(4)),
-				m.group(5));
+		tokens.add(str.substring(lastIdx));
+		
+		if (tokens.size() < 3)
+		{
+			throw invalidArtifact(str);
+		}
+		
+		groupId = tokens.get(0);
+		artifactId = tokens.get(1);
+		
+		if (groupId.isEmpty() || artifactId.isEmpty())
+		{
+			throw invalidArtifact(str);
+		}
+		
+		if (tokens.size() == 3)
+		{
+			extension = DEFAULT_EXTENSION;
+			classifier = "";
+			version = tokens.get(2);
+		}
+		else
+		{
+			extension = tokens.get(2);
+			if (extension.isEmpty())
+			{
+				throw invalidArtifact(str);
+			}
+			
+			if (tokens.size() == 4)
+			{
+				classifier = "";
+				version = tokens.get(3);
+			}
+			else
+			{
+				classifier = tokens.get(3);
+				version = tokens.get(4);
+			}
+		}
 	}
 	
 	public ArtifactItem(
@@ -189,32 +224,6 @@ public final class ArtifactItem
 	public void setClassifier(String classifier)
 	{
 		this.classifier = Objects.requireNonNull(classifier);
-	}
-	
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(
-				groupId, artifactId, version, extension, classifier);
-	}
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (obj == this)
-		{
-			return true;
-		}
-		if (obj == null || !(ArtifactItem.class.equals(obj.getClass())))
-		{
-			return false;
-		}
-		ArtifactItem other = (ArtifactItem) obj;
-		return Objects.equals(groupId, other.groupId)
-				&& Objects.equals(artifactId, other.artifactId)
-				&& Objects.equals(version, other.version)
-				&& Objects.equals(extension, other.extension)
-				&& Objects.equals(classifier, other.classifier);
 	}
 	
 	@Override

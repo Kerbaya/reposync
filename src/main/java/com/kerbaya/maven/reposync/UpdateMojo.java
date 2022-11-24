@@ -19,22 +19,25 @@
 package com.kerbaya.maven.reposync;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -67,8 +70,8 @@ public class UpdateMojo implements Mojo
 	@Setter
 	private Log log;
 
-    @Parameter(defaultValue="${session}", readonly=true, required=true)
-    private MavenSession session;
+    @Parameter(defaultValue="${project}", readonly=true, required=true)
+    private MavenProject project;
     
 	@Parameter(defaultValue="${repositorySystemSession}", required=true, readonly=true)
 	private RepositorySystemSession rss;
@@ -96,12 +99,12 @@ public class UpdateMojo implements Mojo
      * configuration 
      */
     @Parameter
-    private ArtifactItem[] artifactItems;
+    private List<ArtifactItem> artifactItems;
     
     /**
      * The artifact to update when executing the plugin from the command-line, 
-     * in the format
-     * <code>&lt;groupId&gt;:&lt;artifactId&gt;[:&lt;extension&gt;[:&lt;classifier&gt;]]:&lt;version&gt;</code>.
+     * in the format <code>&lt;groupId&gt;:&lt;artifactId&gt;[:&lt;extension&gt;[:&lt;classifier&gt;]]:[version]</code>.
+     * If {@code version} is omitted, dependency management will be used to determine the version.
      * Multiple artifacts may be specified, separated by a comma, or one or more 
      * whitespace characters.  Use {@link #artifactItems} when executing the 
      * plugin within a POM configuration.
@@ -114,7 +117,7 @@ public class UpdateMojo implements Mojo
      * configuration
      */
     @Parameter
-    private ExtraItem[] extraItems;
+    private List<ExtraItem> extraItems;
     
     /**
      * Extra artifacts to include when executing the plugin from the command-
@@ -192,6 +195,32 @@ public class UpdateMojo implements Mojo
         return builder.build();
     }
     
+    private static void removeNoVersionArtifacts(
+    		Iterable<ArtifactItem> items, Consumer<? super ArtifactItem> addTo)
+    {
+    	Iterator<ArtifactItem> iter = items.iterator();
+    	while (iter.hasNext())
+    	{
+    		ArtifactItem next = iter.next();
+    		if ("".equals(next.getVersion()))
+    		{
+    			addTo.accept(next);
+    			iter.remove();
+    		}
+    	}
+    }
+    
+    private Map<ManagedDependencyKey, String> getManagedDependencies()
+    {
+    	DependencyManagement dm = project.getDependencyManagement();
+    	return dm == null ?
+    			Collections.emptyMap()
+    			: dm.getDependencies().stream()
+    					.collect(Collectors.toMap(
+    							ManagedDependencyKey::new, 
+    							org.apache.maven.model.Dependency::getVersion));
+    }
+    
 	@Override
 	public void execute() throws MojoExecutionException
 	{
@@ -205,8 +234,9 @@ public class UpdateMojo implements Mojo
 		Set<ArtifactItem> finalArtifactItems = new HashSet<>();
 		if (artifactItems != null)
 		{
-			finalArtifactItems.addAll(Arrays.asList(artifactItems));
+			finalArtifactItems.addAll(artifactItems);
 		}
+		
 		if (artifact != null)
 		{
 			for (String token: Utils.getTokens(artifact))
@@ -224,10 +254,37 @@ public class UpdateMojo implements Mojo
 			return;
 		}
 		
+		List<ArtifactItem> noVersionArtifacts = new ArrayList<>();
+		removeNoVersionArtifacts(finalArtifactItems, noVersionArtifacts::add);
+		
+		if (!noVersionArtifacts.isEmpty())
+		{
+			Map<ManagedDependencyKey, String> dm = getManagedDependencies();
+			for (ArtifactItem noVersionArtifact: noVersionArtifacts)
+			{
+				String version = dm.get(new ManagedDependencyKey(
+						noVersionArtifact.getGroupId(),
+						noVersionArtifact.getArtifactId(),
+						noVersionArtifact.getExtension(),
+						noVersionArtifact.getClassifier()));
+				if (version == null)
+				{
+					throw new MojoExecutionException("could not find managed dependency for " + noVersionArtifact);
+				}
+				
+				finalArtifactItems.add(new ArtifactItem(
+						noVersionArtifact.getGroupId(),
+						noVersionArtifact.getArtifactId(),
+						noVersionArtifact.getExtension(),
+						noVersionArtifact.getClassifier(),
+						version));
+			}
+		}
+		
 		Set<ExtraItem> finalExtraItems = new HashSet<>();
 		if (extraItems != null)
 		{
-			finalExtraItems.addAll(Arrays.asList(extraItems));
+			finalExtraItems.addAll(extraItems);
 		}
 		if (extra != null)
 		{
@@ -237,7 +294,7 @@ public class UpdateMojo implements Mojo
 			}
 		}
 		
-		List<RemoteRepository> remoteRepos = session.getCurrentProject().getRemoteProjectRepositories();
+		List<RemoteRepository> remoteRepos = project.getRemoteProjectRepositories();
 		
 		ResolutionCollector collector = new ResolutionCollector(log, force ? null : repositoryUrl);
 		
@@ -261,19 +318,16 @@ public class UpdateMojo implements Mojo
 		 */
 		for (ArtifactItem artifactItem: finalArtifactItems)
 		{
+			DependencyRequest dr = new DependencyRequest(
+					new CollectRequest(
+							Collections.singletonList(new Dependency(artifactItem.toArtifact(), null)),
+							null, 
+							remoteRepos),
+					null);
 			final DependencyResult dependencyResult;
 			try
 			{
-				Dependency dependency = new Dependency(
-						artifactItem.toArtifact(), null);
-				dependencyResult = repositorySystem.resolveDependencies(
-						collectingSession, 
-						new DependencyRequest(
-								new CollectRequest(
-										Collections.singletonList(dependency),
-										null, 
-										remoteRepos),
-								null));
+				dependencyResult = repositorySystem.resolveDependencies(collectingSession, dr);
 			}
 			catch (DependencyResolutionException e)
 			{

@@ -22,6 +22,9 @@ import java.util.Objects;
 
 import org.eclipse.aether.artifact.Artifact;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 final class ArtifactPath
 {
 	private final String groupId;
@@ -66,29 +69,6 @@ final class ArtifactPath
 		return version;
 	}
 
-	@Override
-	public int hashCode()
-	{
-		return Objects.hash(groupId, artifactId, version);
-	}
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (obj == this)
-		{
-			return true;
-		}
-		if (obj == null || !(ArtifactPath.class.equals(obj.getClass())))
-		{
-			return false;
-		}
-		ArtifactPath other = (ArtifactPath) obj;
-		return Objects.equals(groupId, other.groupId)
-				&& Objects.equals(artifactId, other.artifactId)
-				&& Objects.equals(version, other.version);
-	}
-	
 	@Override
 	public String toString()
 	{
